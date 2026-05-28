@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 final class DashboardViewModel: ObservableObject {
     @Published var currentWeight: Double = 72.4
