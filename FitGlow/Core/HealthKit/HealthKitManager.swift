@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 final class HealthKitManager: ObservableObject {
     @Published private(set) var isAuthorized = false
