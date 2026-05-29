@@ -21,6 +21,12 @@ struct RootView: View {
                     Text("运动")
                 }
 
+            GoalSetupView()
+                .tabItem {
+                    Image(systemName: "target")
+                    Text("目标")
+                }
+
             AssistantView()
                 .tabItem {
                     Image(systemName: "message")
