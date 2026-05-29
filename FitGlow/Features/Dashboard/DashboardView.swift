@@ -1,44 +1,78 @@
 import SwiftUI
 
 struct DashboardView: View {
-    var body: some View {
-        ZStack {
-            AppColors.background.ignoresSafeArea()
+    @StateObject private var viewModel = DashboardViewModel()
+    @State private var showGoalSetup = false
 
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 24) {
-                    header
-                    weightHeroCard
-                    metricsGrid
-                    assistantInput
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                AppColors.background.ignoresSafeArea()
+
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: AppSpacing.section) {
+                        header
+                        weightHeroCard
+                        metricsGrid
+                        assistantInput
+                    }
+                    .padding(AppSpacing.page)
                 }
-                .padding(20)
+            }
+            .toolbar(.hidden, for: .navigationBar)
+            .sheet(isPresented: $showGoalSetup) {
+                GoalSetupView()
             }
         }
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("FitGlow")
-                .font(.system(size: 34, weight: .bold, design: .rounded))
-                .foregroundStyle(AppColors.primaryText)
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("FitGlow")
+                    .font(AppFonts.largeTitle)
+                    .foregroundStyle(AppColors.primaryText)
 
-            Text("今日状态不错，继续保持节奏。")
-                .font(.system(size: 15, weight: .medium))
-                .foregroundStyle(AppColors.secondaryText)
+                Text("今日状态不错，继续保持节奏。")
+                    .font(AppFonts.body)
+                    .foregroundStyle(AppColors.secondaryText)
+            }
+
+            Spacer()
+
+            Button {
+                showGoalSetup = true
+            } label: {
+                Image(systemName: "target")
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundStyle(.black)
+                    .frame(width: 42, height: 42)
+                    .background(AppColors.neonGreen)
+                    .clipShape(Circle())
+            }
+            .accessibilityLabel("设置目标")
         }
     }
 
     private var weightHeroCard: some View {
         VStack(alignment: .leading, spacing: 18) {
-            Text("当前体重")
-                .font(.system(size: 15, weight: .medium))
-                .foregroundStyle(AppColors.secondaryText)
+            HStack {
+                Text("当前体重")
+                    .font(AppFonts.body)
+                    .foregroundStyle(AppColors.secondaryText)
+
+                Spacer()
+
+                Text("目标进度 \(Int(viewModel.targetProgress * 100))%")
+                    .font(AppFonts.caption)
+                    .foregroundStyle(AppColors.neonGreen)
+            }
 
             HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text("72.4")
-                    .font(.system(size: 64, weight: .bold, design: .rounded))
+                Text(viewModel.weightDisplay)
+                    .font(AppFonts.heroNumber)
                     .foregroundStyle(AppColors.primaryText)
+                    .contentTransition(.numericText())
 
                 Text("kg")
                     .font(.system(size: 22, weight: .semibold))
@@ -46,18 +80,18 @@ struct DashboardView: View {
             }
 
             HStack {
-                Text("本周 -0.6kg")
+                Text(viewModel.weeklyChangeDisplay)
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(AppColors.neonGreen)
+                    .foregroundStyle(viewModel.weeklyWeightChange <= 0 ? AppColors.neonGreen : AppColors.orange)
 
                 Spacer()
 
-                Text("目标 68.0kg")
-                    .font(.system(size: 15, weight: .medium))
+                Text("目标 \(viewModel.targetWeightDisplay)kg")
+                    .font(AppFonts.body)
                     .foregroundStyle(AppColors.secondaryText)
             }
 
-            ProgressView(value: 0.73)
+            ProgressView(value: viewModel.targetProgress)
                 .tint(AppColors.neonGreen)
         }
         .padding(22)
@@ -70,13 +104,13 @@ struct DashboardView: View {
     private var metricsGrid: some View {
         VStack(spacing: 14) {
             HStack(spacing: 14) {
-                metricCard(title: "步数", value: "8,420", unit: "steps")
-                metricCard(title: "消耗", value: "438", unit: "kcal")
+                metricCard(title: "步数", value: viewModel.stepsDisplay, unit: "steps")
+                metricCard(title: "消耗", value: "\(viewModel.activeEnergyKcal)", unit: "kcal")
             }
 
             HStack(spacing: 14) {
-                metricCard(title: "训练", value: "32", unit: "min")
-                metricCard(title: "目标", value: "73", unit: "%")
+                metricCard(title: "训练", value: "\(viewModel.workoutMinutes)", unit: "min")
+                metricCard(title: "目标", value: "\(Int(viewModel.targetProgress * 100))", unit: "%")
             }
         }
     }
@@ -91,9 +125,10 @@ struct DashboardView: View {
                 Text(value)
                     .font(.system(size: 28, weight: .bold, design: .rounded))
                     .foregroundStyle(AppColors.primaryText)
+                    .contentTransition(.numericText())
 
                 Text(unit)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(AppFonts.caption)
                     .foregroundStyle(AppColors.secondaryText)
             }
         }
@@ -107,9 +142,15 @@ struct DashboardView: View {
 
     private var assistantInput: some View {
         HStack(spacing: 12) {
-            Text("问问你的健康助手...")
-                .font(.system(size: 15, weight: .medium))
-                .foregroundStyle(AppColors.secondaryText)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("AI 健康助手")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(AppColors.primaryText)
+
+                Text("描述饮食、运动或体重变化，获得轻量分析。")
+                    .font(AppFonts.caption)
+                    .foregroundStyle(AppColors.secondaryText)
+            }
 
             Spacer()
 
